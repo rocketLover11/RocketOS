@@ -33,7 +33,7 @@ jobs:
 
                 sudo genisoimage -clickable -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/BOOTX64.EFI -no-emul-boot -input-charset utf-8 -R -J -v -V "ROCKET_OS" -o rocket_os.iso iso_stage/
             - name: Upload ISO Artifact
-              uses: actions/artifacts/upload-artifact@v4
+              uses: actions/upload-artifact@v4
               with:
                 name: rocket_os-iso
                 path: rocket_os.iso
