@@ -1,0 +1,40 @@
+name: Build ISO
+on:
+    push:
+        branches: [ "main" ]
+    workflow_dispatch:
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Source Code
+              uses: actions/checkout@v4
+              with:
+                lfs: true
+            - name: Install Build Dependencies
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y squashfs-tools genisoimage
+            - name: Make Directory Trees
+              run: |
+                mkdir -p iso_stage/payloads
+                mkdir -p system_roots/x86_64 system_roots/x86 system_roots/arm64 system_roots/arm32
+                touch system_roots/x86_64/.keep system_roots/x86/.keep system_roots/arm64/.keep system_roots/arm32/.keep
+            - name: Build ISO
+              run: |
+                sudo mksquashfs system_roots/x86_64 iso_stage/payloads/system_x86_64.sfs -noappend -comp xz -b 1M
+                sudo mksquashfs system_roots/x86 iso_stage/payloads/system_x86.sfs -noappend -comp xz -b 1M
+                sudo mksquashfs system_roots/arm64 iso_stage/payloads/system_arm64.sfs -noappend -comp xz -b 1M
+                sudo mksquashfs system_roots/arm32 iso_stage/payloads/system_arm32.sfs -noappend -comp xz -b 1M
+
+                if [ -d "boot" ]; then cp -r boot/* iso_stage/; fi
+                if [ -d "prebuilts" ]; then cp -r prebuilts/* iso_stage/; fi
+                if [ -d "installer_scripts" ]; then cp -r installer_scripts/* iso_stage/; fi
+
+                sudo genisoimage -clickable -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/BOOTX64.EFI -no-emul-boot -input-charset utf-8 -R -J -v -V "ROCKET_OS" -o rocket_os.iso iso_stage/
+            - name: Upload ISO Artifact
+              uses: actions/artifacts/upload-artifact@v4
+              with:
+                name: rocket_os-iso
+                path: rocket_os.iso
+                retention-days: 7
