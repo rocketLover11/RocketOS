@@ -1,0 +1,4 @@
+iso_stage/
+*.iso
+*.log
+.DS_Store
